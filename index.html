@@ -1,0 +1,2413 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Boiler.js v0.9.0</title>
+<meta name="keywords" content="javascript, api, utility, library, documentation, at, compact, difference, first, indexOf, initial, intersection, last, lastIndexOf, object, rest, union, uniq, without, zip, add, all, any, average, clear, clone, contains, count, countBy, deep, each, empty, filter, find, findKey, flatten, groupsOf, has, invert, invoke, isUnique, keyExists, keys, least, len, map, max, min, most, none, omit, only, reduce, reduceRight, reject, remove, replace, sample, set, setUndef, shuffle, size, sortBy, sum, tap, values, where, whereFirst, after, bind, bindAll, compose, debounce, defer, delay, fill, memoize, once, throttle, times, wrap, range, array, build, defaults, extend, get, getByType, howDeep, isArguments, isArray, isBool, isDate, isElement, isEmpty, isEqual, isFalsy, isFunction, isInfinite, isNaN, isNull, isNumber, isObject, isPlainObject, isRegExp, isString, isUndefined, nest, pairs, parent, paths, pluck, resolve, toQueryString, type, fromQueryString, htmlEncode, htmlDecode, chain, end, identity, noConflict, result, uniqueId" />
+<meta name="description"
+      content="Boiler is a utility library that makes every day tasks in JavaScript easier by providing over 115 methods that work with arrays, collections, functions, numbers, objects, and strings. It's the JavaScript equivalent of a Swiss Army Knife." />
+<meta name="robots" content="index,follow" />
+<link href="css/index.css" rel="stylesheet" />
+<link href="css/thirdparty/sh_custom.css" rel="stylesheet" />
+<script type="text/javascript" src="js/thirdparty/jquery-1.8.3.min.js"></script>
+<script type="text/javascript" src="js/thirdparty/shjs/sh_main.min.js"></script>
+<script type="text/javascript" src="js/thirdparty/shjs/lang/sh_javascript.js"></script>
+<script type="text/javascript" src="js/thirdparty/shjs/lang/sh_javascript_dom.js"></script>
+<script type="text/javascript" src="js/thirdparty/shjs/lang/sh_html.js"></script>
+<script type="text/javascript" src="boiler.js"></script>
+<script type="text/javascript">
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-40245545-1']);
+_gaq.push(['_setDomainName', 'boilerjs.com']);
+_gaq.push(['_setAllowLinker', true]);
+_gaq.push(['_trackPageview']);
+(function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script>
+<script type="text/javascript">
+$(document).ready(function() {
+
+    /**
+     * Parses paragraph text
+     */
+    $.fn.parseParagraphs = function() {
+        $.each(this, function(index, elm) {
+            $(elm).html(
+                $(elm).html()
+                    .replace(/\^([a-zA-Z0-9]+)\^/g, '<a>$1</a>')
+                    .replace(/`([\#\.\(\)\s\=\*\"\'a-zA-Z0-9-_\[\]<\/a>]+)`/g, '<code>$1</code>')
+            );
+        });
+    };
+
+    /**
+     * Parses method declaration text
+     */
+    $.fn.parseDeclarations = function() {
+        $.each(this, function(index, elm) {
+           $(elm).html(
+            $(elm).html()
+                .replace(/([\s|\*])([a-zA-Z0-9]+)/g, '$1<a>$2</a>')
+                .replace(/(,)/g, '<i>$1</i>')
+                .replace(/!([^]+)!/g, ' <span style="display:inline-block;" class="type_hint">$1</span>')
+           );
+        });
+    };
+
+    /**
+     * Process all paragraphs
+     */
+    $('p, article li').parseParagraphs();
+
+    /**
+     * Process all method declarations
+     */
+    $('.method_declaration').parseDeclarations();
+
+    /**
+     * Highlight all code within PRE elements
+     */
+    sh_highlightDocument();
+
+    /**
+     * Hide all SOURCE links temporarily
+     */
+    $('.source').parent().hide();
+
+    /**
+     * Build Level 1 Navigation
+     */
+    var levelOne = $("[data-level='1']").toArray().reverse();
+    $.each(levelOne, function(index, value) {
+        var target = $(value);
+        var title = target.attr('data-title');
+        var href = '#' + target.attr('id');
+        if ( index < levelOne.length && index !== 0 ) {
+            $('#nav ul').append('<li class="pipe">|</li><li class="link"><a href="'+href+'">'+title+'</a></li>');
+        } else {
+            $('#nav ul').append('<li class="link"><a href="'+href+'">'+title+'</a></li>');
+        }
+    });
+
+    /**
+     * Build Overview Documentation Index
+     */
+    var overviewLevelOne = $("#overview").parent().find("[data-level='2']");
+    $.each(overviewLevelOne, function(index, value) {
+        var title = $(value).attr('data-title');
+        var href = $(value).attr('id');
+
+        // Tier one index
+        $('#index').append(
+            '<ul id="'+title+'_index">' +
+                '<li class="title"><a href="#'+href+'" class="normal_title">'+title+'</a></li>' +
+            '</ul>'
+        );
+    });
+
+    /**
+     * Build API Documentation Index
+     */
+    var apiLevelOne = $("#api").parent().find("[data-level='2']");
+    $.each(apiLevelOne, function(index, value) {
+        var title = $(value).attr('data-title');
+        var id = '#' + title.toLowerCase();
+
+        // Tier one index
+        $("#index").append(
+            '<ul id="'+title+'_index">' +
+                '<div class="arrow arrow_right"></div>' +
+                '<li class="title"><a class="expando_title">'+title+'</a></li>' +
+                '<li class="items">' +
+                    '<ul class="expando"></ul>' +
+                '</li>' +
+            '</ul>'
+        );
+
+        // Tier two index
+        $(id).find('article a.reference').each(function(ind, val) {
+            var method = $(val).attr('data-title');
+            var href = $(val).attr('id');
+            $("#"+title+'_index li.items ul').append('<li><a href="#'+href+'">'+method+'</a></li>');
+        });
+
+        // Initially hide expando menus
+        $('.expando').css('display', 'none');
+    });
+
+    /**
+     * CLICK Handler for Index Titles
+     */
+    $('a.expando_title').on('click', function() {
+        var target = $('.expando', $(this).parent().next());
+        var arrow = $('.arrow', target.parent().parent());
+        target.toggle();
+        arrow.toggleClass('arrow_right arrow_down');
+    });
+
+    /**
+     * ScrollTo Handler
+     */
+    var scrollTo = function(e) {
+        var href;
+        if ($(e.currentTarget).is('article')) {
+            href = '#' + $('a:first', e.currentTarget).attr('id');
+        } else {
+            e.preventDefault();
+            href = $(e.currentTarget).attr('href');
+        }
+        var target = $(href);
+        var parent = target.parent();
+        var scrollToTarget = target;
+        var once = true;
+
+        // Smooth ScrollTo target
+        $('html, body').animate({
+            scrollTop: Math.abs(parseInt(scrollToTarget.offset().top))
+        }, 350, function() {
+            if (once) {
+                if ( ($(e.currentTarget).is('a') && parent.hasClass('open')) || $(e.currentTarget).is('article') ) {
+
+                    // Toggle extended info DIV
+                    $('div.extended_info', parent).animate({height: "toggle", opacity: "toggle"}, 350);
+
+                    // Set URL hash
+                    window.location.hash = href;
+
+                    // Toggle article opacity
+                    $('article').animate({opacity: '0.6'});
+                    $('.selected').removeClass('selected');
+                    if ( !parent.hasClass('selected') ) {
+                        parent.addClass('selected');
+                        parent.animate({opacity: '1.0'}, 350);
+                    }
+                    once = false;
+                }
+            }
+        });
+
+        // Toggle indicator class
+        if ( !parent.hasClass('open') ) {
+            parent.addClass('open');
+        } else {
+            parent.removeClass('open');
+        }
+
+    };
+
+    /**
+     * Attach ScrollTo handler for Articles/Side Nav Links
+     */
+    $('article, a.normal_title, .expando a').on('click', scrollTo);
+
+    /**
+     * ONLOAD Scroll To hashtag
+     */
+    if ( window.location.hash ) {
+        scrollTo({ currentTarget: $('[href='+window.location.hash+']').get(0), preventDefault: _.identity });
+    } else {
+        var target = $('#overview_about-boiler-js').parent();
+        $('article').animate({opacity: '0.8'});
+        $('div.extended_info', target).animate({height: "toggle", opacity: "toggle"}, 350);
+        if ( !target.hasClass('selected') ) {
+            target.addClass('selected');
+            target.animate({opacity: '1.0'}, 350);
+        }
+        target.addClass('open');
+    }
+
+    /**
+     * MOUSEENTER/MOUSELEAVE handler for Articles
+     */
+    $('article').on('mouseenter mouseleave', function(e) {
+        var target = $(e.currentTarget);
+        var opacity = target.css('opacity');
+        var elipsis = $('#elipsis');
+
+        // Toggle opacity of article
+        if ( !target.hasClass('selected') ) {
+            if (e.type === 'mouseenter') {
+                target.animate({opacity: '1.0'}, 350);
+            } else {
+                target.animate({opacity: '0.8'}, 350);
+            }
+        }
+
+        // Toggle more content indicator
+        if ( !target.hasClass('open') && !target.hasClass('initial') ) {
+            if (e.type === 'mouseenter') {
+                target.append(elipsis);
+                elipsis.show().stop().animate({opacity: '1.0'}, 350);
+            } else {
+                elipsis.show().stop().animate({opacity: '0.0'}, 350);
+            }
+        }
+    });
+
+    /**
+     * SCROLL handler for Back to Top
+     */
+    var toTopFadedIn = false;
+    $(document).on('scroll', function(e) {
+        var scrollDistance = $(document).scrollTop();
+        var docHeight = $(document).height();
+        if ( scrollDistance > 250 && !toTopFadedIn ) {
+            toTopFadedIn = true;
+            $('#top').animate({opacity: '0.8'}, 350);
+        } else if ( scrollDistance < 250 ) {
+            toTopFadedIn = false;
+            $('#top').animate({opacity: '0.0'}, 350);
+        }
+    });
+
+    /**
+     * PAGE fade-in handler
+     */
+    $('#wrapper').animate({opacity: '1.0'}, 1000);
+
+});
+</script>
+</head>
+<body spellcheck="false">
+<div id="wrapper">
+    <a id="boiler_back-to-top"></a>
+    <div id="nav">
+        <ul><li class="app"><a href="http://www.boilerjs.com" class="page_title">Boiler.js</a></li></ul>
+    </div>
+    <div id="separator"></div>
+    <div id="content">
+        <div id="index"></div>
+
+        <section> <a id="overview" class="reference" data-title="Overview" data-level="1"></a>
+            <h2>Overview</h2>
+            <article data-title="About Boiler.js" class="initial">
+                <a id="overview_about-boiler-js" class="reference" data-title="About Boiler.js" data-level="2"></a>
+                <h4>About Boiler.js</h4>
+                <p>Boiler is a utility library that makes every day tasks in JavaScript easier by providing <i>over 115 methods</i> that work with `arrays`, `collections`, `functions`, `numbers`, `objects`, and `strings`. It's the JavaScript equivalent of a Swiss Army Knife.</p>
+                <p>As with any library worth its own weight, Boiler has its own suite of <a href="/tests">Unit Tests</a> available.</p>
+                <div class="initial_info">
+                    <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_([{hsl: [0, 50, 100] }, {hsl: [0, 120, 50]}]).pluck('hsl.1')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [50, 120]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sortBy([{foo: {bar: 2}}, {foo: {bar: 1}}, {foo: {bar: 3}}], 'foo.bar')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [{foo: {bar: 1}}, {foo: {bar: 2}}, {foo: {bar: 3}}]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.resolve({animals: ['Dolphin', 'Lion', 'Turtle'] }, 'animals.0')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'Dolphin'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.chain([[1, 2, 3], [2, 3, 4]]).flatten().uniq().end()</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4]</pre>
+                    </div>
+                </div>
+            </article>
+            <article data-title="Download" class="initial">
+                <a id="overview_download" class="reference" data-title="Download" data-level="2"></a>
+                <h4>Download</h4>
+                <p><a href="boiler-0.9.0.min.js">Download</a> the latest release <i>(as of 05/29/2013)</i>.</p>
+                <div class="initial_info">
+                    <p>If you're a developer feel free to download a copy of the Edge Version to stay up to date on daily changes or <a href="https://github.com/Xaxis/boiler">track the project on GitHub</a>.</p>
+                    <ul>
+                        <li><a href="boiler.js">Download 0.9.0 Edge</a></li>
+                        <li><a href="boiler-0.9.0.js">Download 0.9.0 Release</a></li>
+                        <li><a href="boiler-0.9.0.min.js">Download 0.9.0 Release (minified)</a></li>
+                    </ul>
+                </div>
+            </article>
+            <article data-title="Fork on GitHub" class="initial">
+                <a id="overview_fork-on-github" class="reference" data-title="Fork on GitHub" data-level="2"></a>
+                <h4>Fork on GitHub</h4>
+                <div class="initial_info">
+                    <p>If you're interested in contributing <a href="https://github.com/Xaxis/boiler">Fork us on GitHub</a> to get started.</p>
+                </div>
+            </article>
+        </section>
+
+        <section> <a id="api" class="reference" data-title="API" data-level="1"></a>
+        <h2>API</h2>
+        <h3>Arrays</h3>
+        <a id="api_arrays" class="reference" data-title="Arrays" data-level="2"></a>
+        <div id="arrays">
+        <article> <a class="reference" id="api_at" data-title="at" data-level="3"></a>
+            <h4 class="method_declaration">at( arr, index )</h4>
+            <p>Returns the element(s) at an index or array of indices.</p>
+            <div class="extended_info">
+                <p>If `^index^` is passed as an array the values within should represent the indices from which to get elements at.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.at(['Earth', 'Mars', 'Jupiter'], 1)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Mars']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.at(['Red', 'Green', 'Magenta', 'Yellow'], [2])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Magenta']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.at(['Red', 'Green', 'Magenta', 'Yellow'], [0, 2])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Red', 'Magenta']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.at(['Red', ['Green', ['Magenta', ['Yellow']]]], 0)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Red']</pre>
+                </div>
+                <p><a href="#at_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_difference" data-title="difference" data-level="3"></a>
+            <h4 class="method_declaration">difference( arr, *arrs )</h4>
+            <p>Returns the values from `^arr^` that are not in `*^arrs^`.</p>
+            <div class="extended_info">
+                <p>Accepts any number of arrays as arguments. The first array passed becomes the target array from which to compute differences.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.difference(['Red', 'Green', 'Blue'], ['Red', 'Green'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Blue']</pre>
+                </div>
+                <p><a href="#difference_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_first" data-title="first" data-level="3"></a>
+            <h4 class="method_declaration">first( arr, n )</h4>
+            <p>Gets the first element of an array.</p>
+            <div class="extended_info">
+                <p>Passing `^n^` will return the first `^n^` number of elements starting from the beginning of the array.</p>
+                <p class="method_alias"><span>Aliases: </span><span>take</span></p>
+                <p class="method_return"><span>Returns: </span><span>...*, Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.first([1, 2, 3, 4])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.first(['Mercury', 'Venus', 'Earth', 'Mars'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'Mercury'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.first(['Mercury', 'Venus', 'Earth', 'Mars'], 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Mercury', 'Venus']</pre>
+                </div>
+                <p><a href="#first_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_indexOf" data-title="indexOf" data-level="3"></a>
+            <h4 class="method_declaration">indexOf( arr, value, from, deep )</h4>
+            <p>Returns the first index at which `^value^` occurs, deferring to JavaScript's native `indexOf` method when available.</p>
+            <div class="extended_info">
+                <p>Passing an index through `^from^` will get the first occurrence of `^value^` after `^from^`.</p>
+                <p>When `^deep^` is passed `true`, `^value^` will be searched for using a deep equality comparison, short circuiting the usage of the native `indexOf` method.</p>
+                <p>If `^value^` does not exist in the array `-1` is returned.</p>
+                <p class="method_alias"><span>Aliases: </span><span>firstIndexOf</span></p>
+                <p class="method_return"><span>Returns: </span><span>...*, -1</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.indexOf(['Honda', 'Ford', 'GM'], 'Ford')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.indexOf([1, 2, 3], 4);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => -1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.indexOf(['Honda', 'Ford', 'GM', 'Suburu', 'Honda'], 'Honda', 3)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 4</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.indexOf([1, 2, [3], 1, 2, [3]], [3], 3, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 5</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.indexOf(['Honda', 'Ford', ['GM']], ['GM'], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 2</pre>
+                </div>
+                <p><a href="#indexOf_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_initial" data-title="initial" data-level="3"></a>
+            <h4 class="method_declaration">initial( arr, n )</h4>
+            <p>Returns a copy of `^arr^` with all but the last element.</p>
+            <div class="extended_info">
+                <p>Passing `^n^` will return all but the last `^n^` number of element(s) from the end of `^arr^`.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.initial(['Tiger', 'Lion', 'Cheetah'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Tiger', 'Lion']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.initial([1, 2, 3, 4, 5, 6], 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4]</pre>
+                </div>
+                <p><a href="#initial_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_intersection" data-title="intersection" data-level="3"></a>
+            <h4 class="method_declaration">intersection( arr, *arrs )</h4>
+            <p>Gets the elements in `^arr^` that are also in `*^arrs^`.</p>
+            <div class="extended_info">
+                <p>Accepts any number of arrays as arguments. The first array passed becomes the target array from which to compare intersections.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.intersection([1, 2, 3, 4], [1, 2, 101, 102], [2, 1])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.intersection(['Red', 'Green'], ['Green', 'Magenta'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Green']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.intersection([7, 8, 9], [[9], 10, 11])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => []</pre>
+                </div>
+                <p><a href="#intersection_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_last" data-title="last" data-level="3"></a>
+            <h4 class="method_declaration">last( arr, n )</h4>
+            <p>Gets the last element in `^arr^`.</p>
+            <div class="extended_info">
+                <p>Passing `^n^` will return the last `^n^` number of elements from the end of `^arr^`.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.last([1, 2, 3, 4, 5])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 5</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.last(['Hercules', 'Posiedon', 'Apollo'], 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Posiedon', 'Apollo']</pre>
+                </div>
+                <p><a href="#last_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_lastIndexOf" data-title="lastIndexOf" data-level="3"></a>
+            <h4 class="method_declaration">lastIndexOf( arr, value, from, deep )</h4>
+            <p>Returns the last index at which `^value^` occurs, deferring to JavaScript's native `lastIndexOf` method when available.</p>
+            <div class="extended_info">
+                <p>Passing an index through `^from^` will start the search for `^value^` at `^from^` searching backwards.</p>
+                <p>When `^deep^` is passed `true`, `^value^` will be searched for using a deep equality comparison, short circuiting the usage of the native `lastIndexOf` method.</p>
+                <p>If `^value^` does not exist in the array `-1` is returned.</p>
+                <p class="method_return"><span>Returns: </span><span>...*, -1</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.lastIndexOf(['Honda', 'Ford', 'GM'], 'Ford')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.lastIndexOf([1, 2, 3], 4);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => -1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.lastIndexOf(['Honda', 'Ford', 'GM', 'Suburu', 'Honda'], 'Honda', 3)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 0</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.lastIndexOf([1, 2, [3], 1, 2, [3]], [3], 3, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 2</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.lastIndexOf(['Honda', 'Ford', ['GM']], ['GM'], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 2</pre>
+                </div>
+                <p><a href="#lastIndexOf_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_object" data-title="object" data-level="3"></a>
+            <h4 class="method_declaration">object( ...*, *arrs )</h4>
+            <p>Creates an object literal from passed values.</p>
+            <div class="extended_info">
+                <p>When a single array is passed, odd elements are used as keys and even as values.</p>
+                <p>When two arrays are passed the first is used to create the returned object's keys and the second its values.</p>
+                <p>When more than two arrays are passed, each array should contain one key and one value.</p>
+                <p>Passing an even number of arguments will result in all odd arguments being used as keys and all even arguments as values.</p>
+                <p class="method_alias"><span>Aliases: </span><span>toObject</span></p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.object([0, 'Blue'], [1, 'Red'], [2, 'Green'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'Blue', 1: 'Red', 2: 'Green'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.object([0, 1, 2], ['Blue', 'Red', 'Green'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'Blue', 1: 'Red', 2: 'Green'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.object(0, 'Blue', 1, 'Red', 2, 'Green')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'Blue', 1: 'Red', 2: 'Green'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.object('numbers', [1, 2, 3])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {numbers: [1, 2, 3]}</pre>
+                </div>
+                <p><a href="#object_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_remove" data-title="remove" data-level="3"></a>
+            <h4 class="method_declaration">remove( arr, value )</h4>
+            <p>Removes all instances of `^value^` from the array `^arr^`.</p>
+            <div class="extended_info">
+                <p>Uses an optimized deep equality comparison to match values to be removed.</p>
+                <p>Differs from `_.without` in that `_.remove` is destructive.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.remove([1, 2, 2, 4], 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 4]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.remove([1, [2], [2], 4], [2])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 4]</pre>
+                </div>
+                <p><a href="#remove_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_rest" data-title="rest" data-level="3"></a>
+            <h4 class="method_declaration">rest( arr, index )</h4>
+            <p>Gets elements from `^arr^` after the first element.</p>
+            <div class="extended_info">
+                <p>Passing `^index^` will get all elements from `^arr^` after index `^index^`.</p>
+                <p class="method_alias"><span>Aliases: </span><span>tail</span></p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.rest(['Magnolia', 'Rose', 'Lilly'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Rose', 'Lilly']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.rest([1, 2, 3, 4, 5, 6], 3)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [4, 5, 6]</pre>
+                </div>
+                <p><a href="#rest_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_union" data-title="union" data-level="3"></a>
+            <h4 class="method_declaration">union( *arrs )</h4>
+            <p>Returns an array containing all unique values within passed arrays in the order they are present.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.union(['Red', 'Green'], ['Blue', 'Red'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Red', 'Green', 'Blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.union([1, 2, 3], [2, 3, 4], [3, 4, 5])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4, 5]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.union([1, 2, [3]], [2, 3, [4]], [3, [[4]], 5])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4, 5]</pre>
+                </div>
+                <p><a href="#union_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_uniq" data-title="uniq" data-level="3"></a>
+            <h4 class="method_declaration">uniq( arr, fn, scope )</h4>
+            <p>Returns a copy of `^arr^` with all duplicate values removed using a deep equality comparison.</p>
+            <div class="extended_info">
+                <p>When `^fn^` is passed, each value in `^arr^` is passed through the callback `^fn^` before the uniqueness of values is computed.</p>
+                <p>When `^scope^` is passed the iterator `^fn^` is bound to the context of `^scope^` when called.</p>
+                <p class="method_alias"><span>Aliases: </span><span>unique</span></p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.uniq([1, 2, 3, 4, 5, 6, 1, 2, 3])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4, 5, 6]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.uniq([[1, 2, 3], [4, 5, 6], [1, 2, 3], [4, 5, 6]])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [[1, 2, 3], [4, 5, 6]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.uniq([1, 2, 3, 3], function (n) { return n * 2; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [2, 4, 6]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.uniq([1, 1, 2, 2, [3, 3, 4, 4]])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, [3, 3, 4, 4]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.uniq([1, 1, 2, 2, [3, 3, 4, 4]], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4]</pre>
+                </div>
+                <p><a href="#uniq_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_without" data-title="without" data-level="3"></a>
+            <h4 class="method_declaration">without( arr, values )</h4>
+            <p>Returns a copy of `^arr^` with elements found in the `^values^` array removed.</p>
+            <div class="extended_info">
+                <p>Differs from `_.remove` in that `_.without` is non-destructive.</p>
+                <p class="method_alias"><span>Aliases: </span><span>exclude</span></p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.without(['Red', 'Green', 'Blue'], ['Red'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Green', 'Blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.without([{0: 'Red'}, {1: 'Green'}, {2: 'Blue'}], [{0:'Red'}])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [{1: 'Green'}, {2: 'Blue'}]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.without([1, 2, 3, 4], [3, [4]], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2]</pre>
+                </div>
+                <p><a href="#without_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_zip" data-title="zip" data-level="3"></a>
+            <h4 class="method_declaration">zip( *arrs )</h4>
+            <p>Merges the elements of `*^arrs^` into a single array.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.zip(['Red', 'Blue'], ['#F00', '#00F'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [['Red', '#F00'], ['Blue', '#00F']]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.zip([1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.zip(['Joe', 'Bob', 'Tod'], [28, 35, 40])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [['Joe', 28], ['Bob', 35], ['Tod', 40]]</pre>
+                </div>
+                <p><a href="#zip_source" class="source">Source</a></p>
+            </div>
+        </article>
+        </div>
+        <a id="api_collections" class="reference" data-title="Collections" data-level="2"></a>
+        <div id="collections">
+        <h3>Collections</h3>
+        <article> <a class="reference" id="api_add" data-title="add" data-level="3"></a>
+            <h4 class="method_declaration">add( list, path, value )</h4>
+            <p>Adds a value to a collection at `^path^` if target index at `^path^` does not exist.</p>
+            <div class="extended_info">
+                <p>Values can be added at dot delimited "namespace paths" such as `0.2.1` or `piano.company.22`.</p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.add([1, 2], 2, 3)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.add({0: 'Green', 1: {}}, '1.0', 'Red')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'Green', 1: 'Blue'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.add({piano: 'Yamaha', guitar: 'Fender'}, 'guitar', 'Gibson')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {piano: 'Yamaha', guitar: 'Fender'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.add({piano: 'Yamaha', guitar: []}, 'guitar.0', 'Gibson')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {piano: 'Yamaha', guitar: ['Gibson']}</pre>
+                </div>
+                <p><a href="#add_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_all" data-title="all" data-level="3"></a>
+            <h4 class="method_declaration">all( list, fn, scope, deep )</h4>
+            <p>Returns `true` when all members of a collection pass a test established by a condition within `^fn^`.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed as `true`, will perform a deep iteration over values in nested arrays and objects.</p>
+                <p class="method_alias"><span>Aliases: </span><span>every</span></p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.all([1, 2, 3], function (n) { return _.isNumber(n) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.all({0: 'Green', 1: 4}, function (n) { return _.isString(n) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode"> _.all({0: 'Green', 1: 'Red', 2: ['Blue']}, function (n) { return _.isString(n) ? true : false; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+
+                </div>
+                <p><a href="#all_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_any" data-title="any" data-level="3"></a>
+            <h4 class="method_declaration">any( list, fn, scope, deep )</h4>
+            <p>Returns `true` if any member of a collection passes a test established in the callback `^fn^`.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed, performs a deep iteration over values in nested arrays and objects.</p>
+                <p class="method_alias"><span>Aliases: </span><span>some</span></p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.any(['Red', 22], function (n) {return _.isNumber(n) ? true : false;})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.any({0: 44, 1: 'Blue'}, function (n) { return _.isString(n) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.any({0: 44, 1: [22, 'Blue', 66]}, function (n) { return _.isString(n) ? true : false; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#any_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_average" data-title="average" data-level="3"></a>
+            <h4 class="method_declaration">average( list, fn, deep )</h4>
+            <p>Returns the average of all the numeric values in a collection.</p>
+            <div class="extended_info">
+                <p>When a callback `^fn^` is passed each value in `^list^` will be computed through `^fn^` before the average value is determined.</p>
+                <p>When `^deep^` is passed, will perform a deep iteration over values in nested arrays and objects.</p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.average([22, 44, 88])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 51.333333333333336</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.average({0: 99, 1: 999})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 549</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.average({0: 99, 1: 999, 2: [22, 222]}, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 335.5</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.average([1, 2, [3]], function(n) { return n * 2; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 4</pre>
+                </div>
+                <p><a href="#average_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_clear" data-title="clear" data-level="3"></a>
+            <h4 class="method_declaration">clear( list )</h4>
+            <p>Returns `^list^` with its values/properties cleared.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.clear({0: 'Red', 1: 'Green', 2: 'Blue'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.clear(['Red', 'Green', 'Blue'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => []</pre>
+                </div>
+                <p><a href="#clear_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_clone" data-title="clone" data-level="3"></a>
+            <h4 class="method_declaration">clone( list, fn, deep )</h4>
+            <p>Creates a copy of a collection.</p>
+            <div class="extended_info">
+                <p>By default a shallow clone is returned (where arrays and objects are copied by reference).</p>
+                <p>A callback passed through `^fn^` will be invoked on each cloned value.</p>
+                <p>When `^deep^` is passed as `true` a deep copy of `^list^` is returned (where any nested arrays or objects are copied instead of referenced).</p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.clone({0: 'Sky', 1: 'Sun'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'Sky', 1: 'Sun'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.clone([1, 2, 3, [4]], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, [4]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.clone([1, 2, [3]], function(num) { return num * 2; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [2, 4, [3]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.clone([1, 2, 3], function(num) { return num * 2; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [2, 4, [6]]</pre>
+                </div>
+                <p><a href="#clone_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_compact" data-title="compact" data-level="3"></a>
+            <h4 class="method_declaration">compact( list, all )</h4>
+            <p>Returns a copy of `^list^` with all "falsy" values (`false`, `null`, `0`, `''`, `undefined`, and `NaN`) removed`.</p>
+            <div class="extended_info">
+                <p>When `^all^` is passed as `true` any empty arrays or empty objects will be removed as well.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.compact([0, null, undefined, '', NaN, false, {}, [], 'Red'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [{}, [], 'Red']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.compact({0: [], 1: 'Green', 2: {}, 3: 'Blue'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Green', 'Blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.compact([[], 'Green', {}, 'Blue'], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Green', 'Blue']</pre>
+                </div>
+                <p><a href="#compact_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_contains" data-title="contains" data-level="3"></a>
+            <h4 class="method_declaration">contains( list, value, deep )</h4>
+            <p>Returns true if `^value^` is within the collection `^list^`.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed `true` values within nested arrays and objects are iterated through.</p>
+                <p class="method_alias"><span>Aliases: </span><span>inArray</span></p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.contains([1, 2, 3, 4], 3)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.contains({0: 'Red', 1: 'Blue'}, 'Green')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.contains({color: 'Red', rgb: ['#F00']}, ['#F00'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.contains({0: 1, 1: [2]}, 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.contains({0: 1, 1: [2]}, 2, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#contains_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_count" data-title="count" data-level="3"></a>
+            <h4 class="method_declaration">count( list, fn, scope )</h4>
+            <p>Returns the count of how many values in a collection pass a test.</p>
+            <div class="extended_info">
+                <p>The test is established by a condition within `^fn^`. The scope of `^fn^` can be bound to the value passed through `^scope^`.</p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.count([1, 'silver', 3, 'gold'], function (v) { return _.isNumber(v); })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 2</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.count([1, 'silver', 3, [4, 'gold', 5]], function (v) { return _.isNumber(v); }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 4</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.count({0: 'red', 1: 'blue', 2: ['green']}, function(v) { return _.isString(v); })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 2</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.count({0: 'red', 1: 'blue', 2: ['green']}, function(v) { return _.isString(v); }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 3</pre>
+                </div>
+                <p><a href="#count_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_countBy" data-title="countBy" data-level="3"></a>
+            <h4 class="method_declaration">countBy( list, fn, scope )</h4>
+            <p>Sorts a collection into groups.</p>
+            <div class="extended_info">
+                <p>The object returned uses the value as the property that references the number of values in that group.</p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.countBy([1.3, 1.5, 2.2, 2.9], function (n) { return Math.floor(n); })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {1: 1, 2: 1}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.countBy({0: 'Red', 1: 'Red', 2: 'Blue'}, function (c) { return c; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {Red: 2, Blue: 1}</pre>
+                </div>
+                <p><a href="#countBy_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_deep" data-title="deep" data-level="3"></a>
+            <h4 class="method_declaration">deep( list, fn, depth )</h4>
+            <p>Performs a deep iteration on the target collection calling `^fn^` on every value (including values in nested collections) within `^list^` and returns an array of values that have passed a condition established by the iterator.</p>
+            <div class="extended_info">
+                <p>When more than three arguments need be passed a configuration object is expected. This configuration object accepts the following properties:</p>
+                <ul>
+                    <li>`list` The collection to iterate through</li>
+                    <li>`fn` The iterator function</li>
+                    <li>`depth` The nested depth of which to iterate to</li>
+                    <li>`args` An array of arguments to pass to the iterator</li>
+                    <li>`noArrays` A boolean flag indicating not to iterate over nested arrays' values</li>
+                    <li>`noObjects` A boolean flag indicating not to iterate over nested object-literals' values</li>
+                    <li>`retType` A boolean flag telling the method to return `^list^` instead of an array of values that have passed the condition established by `fn`</li>
+                </ul>
+                <p>When `^depth^` is passed an integer, `_.deep` will iterate over nested arrays and object-literals below the specified depth otherwise all nested levels are iterated through. Passing the string `'*'` through `^depth^` has the same effect as not passing `^depth^` in the first place and all nested levels are iterated through.</p>
+                <p>The iterator callback accepts the following arguments:</p>
+                <ul>
+                    <li>`depth` A string or integer representing the depth at a given iteration</li>
+                    <li>`index` The property name or index of the value at an iteration</li>
+                    <li>`value` The value at a current iteration</li>
+                    <li>`reference` A reference to `^list^` per iteration</li>
+                    <li>`...*` Additional arguments that have been passed to iterator through `^args^`</li>
+                </ul>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.deep({obj: {0: 'object', 1: {}}, fn: function (d, i, v, r) { r[i] = _.type(v); }, retType: true})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'string', 1: 'object'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.deep([0, [1, [2, [3]]]], function (d, i, v) { return _.isNumber(v) ? v : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.deep({0: {1: {2: {3: [0, 1, 2, 3, [4, 5, 6]]}}}}, function (d, i, v) { return v; }, 1)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [{1: {2: {}}}]</pre>
+                </div>
+                <p><a href="#deep_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_each" data-title="each" data-level="3"></a>
+            <h4 class="method_declaration">each( list, fn, scope )</h4>
+            <p>Iterates through a collection applying the callback `^fn^` to every value in `^list^`.</p>
+            <div class="extended_info">
+                <p>If `^fn^` returns `false` the loop will break and the callback returns.</p>
+                <p>Defers to JavaScript's native `forEach` method on arrays when available.</p>
+                <p class="method_alias"><span>Aliases: </span><span>forEach</span></p>
+                <p class="method_return"><span>Returns: </span><span>undefined</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.each([1, 2, 3], function (v, i) { return v === 2 ? false : true; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.each([{0: 'red'}, function (v, i) { return v === 2 ? false : true; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3]</pre>
+                </div>
+                <p><a href="#each_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_empty" data-title="empty" data-level="3"></a>
+            <h4 class="method_declaration">empty( list, deep )</h4>
+            <p>Sets all values in a collection to undefined.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed as `true` nested arrays' and objects' values are set to `undefined` as well.</p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.empty([1, 2])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [undefined, undefined]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.empty({0: 1, 1: 2})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: undefined, 1: undefined}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.empty([1, [2]], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [undefined, [undefined]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.empty([1, {0: 2}], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [undefined, {0: undefined}]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.empty({0: 1, 1: [2]}, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: undefined, 1: [undefined]}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.empty({0: 1, 1: {0: 2}}, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: undefined, 1: {0: undefined}}</pre>
+                </div>
+                <p><a href="#empty_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_filter" data-title="filter" data-level="3"></a>
+            <h4 class="method_declaration">filter( list, fn, scope )</h4>
+            <p>Searches through the values in a collection returning those that pass a test established by a condition within `^fn^`.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.filter([1, 'Blue', 3], function (v) { return _.isString(v) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.filter({0: 2, 1: 'Red'}, function (v) { return _.isNumber(v) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [2]</pre>
+                </div>
+                <p><a href="#filter_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_find" data-title="find" data-level="3"></a>
+            <h4 class="method_declaration">find( list, fn, scope, deep )</h4>
+            <p>Searches through all values in the collection `^list^` returning the first that passes a test established by a condition within `^fn^`.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed as `true` values will be searched for within any nested arrays and objects within `^list^`.</p>
+                <p class="method_alias"><span>Aliases: </span><span>findValue</span></p>
+                <p class="method_return"><span>Returns: </span><span>String, Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.find([1, 'Red', 'Blue'], function (v) { return _.isString(v) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'Red'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.find({0: 1, 1: 2, 2: 'Red'}, function (v) { return _.isNumber(v) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.find([1, {0: 2}], function(n) { return n === 2; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => undefined</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.find([1, {0: 2}], function(n) { return n === 2; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 2</pre>
+                </div>
+                <p><a href="#find_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_findKey" data-title="findKey" data-level="3"></a>
+            <h4 class="method_declaration">findKey( obj, fn, scope, deep )</h4>
+            <p>Returns the first value whose property/index has passed a test established by a condition within `^fn^`.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed as `true` properties/indices will be searched for within any nested arrays and objects within `^list^`.</p>
+                <p class="method_return"><span>Returns: </span><span>Number, String</span></p>
+                <p class="method_alias"><span>Aliases: </span><span>findIndex</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.findKey([1, 2, 3, 4], function (v) { return v === 2 ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 3</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.findKey({0: 99, 1: 100, 2: 'str'}, function (v) { return v == 2 ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => "str"</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.findKey([1, [2, 3, 4]], function(k) { return k == 2; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => undefined</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.findKey([1, [2, 3, 4]], function(k) { return k == 2; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 4</pre>
+                </div>
+                <p><a href="#findKey_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_flatten" data-title="flatten" data-level="3"></a>
+            <h4 class="method_declaration">flatten( obj, depth )</h4>
+            <p>Flattens a nested collection of any depth.</p>
+            <div class="extended_info">
+                <p>Passing `^n^` will flatten a collection to the specified depth.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.flatten([1, [2]])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.flatten({0: 1, 1: {1: 2}})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.flatten({0: 1, 1: [2]})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.flatten([1, [2, {0: 3}]])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.flatten({0: 1, 1: 2, 2: [3, [4]]}, 1)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, [3, [4]]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.flatten([1, 2, {0: 3, 1: [4]}], 1)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, {0: 3, 1: [4]}]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.flatten([1, [2, [3]]], 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, [3]]</pre>
+                </div>
+                <p><a href="#flatten_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_getByType" data-title="getByType" data-level="3"></a>
+            <h4 class="method_declaration">getByType( list, type, deep )</h4>
+            <p>Performs a search through the values in a collection and returns an array of values from `^list^ of a given type.</p>
+            <div class="extended_info">
+                <p>When `^type^` is passed as `'*'` all member values in `^list^` are returned. Supported types are `arguments`, `array`, `bool`, `date`, `element`, `function`, `infinite`, `nan`, `null`, `number`, `object`, `regexp`, `string`, and `undefined`.</p>
+                <p>When `^deep^` is passed as `true` a recursive search is performed through nested arrays and objects.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.getByType({0: 99, 1: 98, 2: 97}, 'number')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [99, 98, 97]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.getByType({0: 99, 1: 98, 2: {0: 'blue'}}, 'string', true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.getByType({0: 'red', 1: 'green', 2: {0: 96}}, '*', true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['red', 'green', {0: 96}, 96]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.getByType([[[1]], [[2]], [[3]]], 'array', true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [[[1]], [1], [[2]], [2], [[3]], [3]]</pre>
+                </div>
+                <p><a href="#getByType_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_groupBy" data-title="groupBy" data-level="3"></a>
+            <h4 class="method_declaration">groupBy( list, map, scope )</h4>
+            <p>Groups a collections values after running each value through `^map^`.</p>
+            <div class="extended_info">
+                <p>When `^map^` is a string values are grouped by property name.</p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.groupBy(['Cat', 'Dog', 'Iguana'], function (s){ return s.length; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {3: ['Dog'], 6: ['Iguana']}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.groupBy([{elm: 'K', type: 'metal'}, {elm: 'Ca', type: 'metal'}, {elm: 'Ne', type: 'gas'}], 'type')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {metal: [{elm: 'K', type: 'metal'}, {elm: 'Ca', type: 'metal'}], gas: [{elm: 'Ne', type: 'gas'}]}</pre>
+                </div>
+                <p><a href="#groupBy_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_groupsOf" data-title="groupsOf" data-level="3"></a>
+            <h4 class="method_declaration">groupsOf( list, n, pad )</h4>
+            <p>Parses a collection into groups of `^n^` values.</p>
+            <div class="extended_info">
+                <p>If `^pad^` is passed the collection is padded with `^pad^`.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.groupsOf([1.3, 1.5, 2.1, 2.4, 3.9, 3.8, 4.2], 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [[1.3, 1.5], [2.1, 2.4], [3.9, 3.8], [4.2]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.groupsOf([1.3, 1.5, 2.1, 2.4, 3.9, 3.8, 4.2], 2, 9.9)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [[1.3, 1.5], [2.1, 2.4], [3.9, 3.8], [4.2, 9.9]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.groupsOf({0: 1.3, 1: 1.5, 2: 2.1, 3: 2.4, 4: 3.9, 5: 3.8, 6: 4.2}, 3, 'pad')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [[1.3, 1.5, 2.1], [2.4, 3.9, 3.8], [4.2, 'pad', 'pad']]</pre>
+                </div>
+                <p><a href="#groupsOf_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_has" data-title="has" data-level="3"></a>
+            <h4 class="method_declaration">has( list, key, deep )</h4>
+            <p>Returns `true` if a property/index in a collection exists, deferring to JavaScript's native `has` method when available and `^deep^` has not been passed.</p>
+            <div class="extended_info">
+                <p class="method_alias"><span>Aliases: </span><span>keyExists</span></p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.has([0, 1, 2, 3, 4], 3)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.has({name: 'Ted', age: 33}, 'name')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.has({color: 'red', hex: '#F00'}, 'rgb')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.has({color: 'red', hex: '#F00', other: {rgb: '255,0,0'}}, 'rgb')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.has({color: 'red', hex: '#F00', other: {rgb: '255,0,0'}}, 'rgb', true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#has_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_invert" data-title="invert" data-level="3"></a>
+            <h4 class="method_declaration">invert( list )</h4>
+            <p>Flips a collection's name/value or index/element pairs.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.invert({0: 'Green', 1: 'Blue', 2: 'Red', 3:'Yellow'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {Green: 0, Blue: 1, Red: 2, Yellow: 3}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.invert([1, 2, 3, 4, 5])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {1: 0, 2: 1, 3: 2, 4: 3, 5: 4}</pre>
+                </div>
+                <p><a href="#invert_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_invoke" data-title="invoke" data-level="3"></a>
+            <h4 class="method_declaration">invoke( list, fn, args )</h4>
+            <p>Calls `^fn^` on each value in the target collection.</p>
+            <div class="extended_info">
+                <p>All values in the `^args^` array are passed to `^fn^` when invoked.</p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.invoke({0: 'Tulip', 1: 'Daisy'}, function (v, a) { return v + a; }, [' is a flower.'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Tulip is a flower.', 'Daisy is a flower.']</pre>
+                </div>
+                <p><a href="#invoke_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isEmpty" data-title="isEmpty" data-level="3"></a>
+            <h4 class="method_declaration">isEmpty( list )</h4>
+            <p>Returns `true` if the collection `^list^` has no values.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEmpty([])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEmpty({})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEmpty(['Red', 'Green', 'Blue'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEmpty(false)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                </div>
+                <p><a href="#isEmpty_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isUnique" data-title="isUnique" data-level="3"></a>
+            <h4 class="method_declaration">isUnique( list, index )</h4>
+            <p>Returns `true` when a targeted value at `^index^` in a collection is unique.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isUnique([1, 2, 1, 2, 3], 4)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isUnique({0: 'green', 1: 'green', 2: 'blue'}, 0)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isUnique({arr1: [1, 2, 3], arr2: [1, 2, 3]}, 'arr2')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                </div>
+                <p><a href="#isUnique_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_keys" data-title="keys" data-level="3"></a>
+            <h4 class="method_declaration">keys( list, deep )</h4>
+            <p>Returns an array containing a collection's properties/indices, deferring to JavaScript's native `keys` method when available and `^deep^` has not been passed.</p>
+            <p>When `^deep^` is passed as `true` the keys of all nested objectss and arrays are returned as well.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.keys(['Red', 'Green', 'Blue'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['0', '1', '2']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.keys({name: 'Ted', age: 33, eyecolor: 'Blue'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['name', 'age', 'eyecolor']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.keys({name: 'Ted', age: 33, extra: {eyecolor: 'Blue'}}, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['name', 'age', 'extra', 'extra.eyecolor']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.keys({name: 'Ted', age: 33, extra: ['Male']}, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['name', 'age', 'extra', 'extra.0']</pre>
+                </div>
+                <p><a href="#keys_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_least" data-title="least" data-level="3"></a>
+            <h4 class="method_declaration">least( list, map )</h4>
+            <p>Returns the value in a collection with the least occurrences.</p>
+            <div class="extended_info">
+                <p>The `^map^` argument should be a function mapping the value to be tested or a string representing
+                    the property name to test.</p>
+                <p class="method_return"><span>Returns: </span><span>...*</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.least([1, 1, 2, 2, 3])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.least({0: 'Zero', 1: 'Zero', 2: 'One', 3: 'Two', 4: 'Two'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'One'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.least([{color: 'Red'}, {color: 'Red'}, {color: 'Green'}])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {color: 'Green'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.least([{p: 'al', age: 22}, {p: 'al', age: 47}, {p: 'greg', age: 22}], function (t) { return t.age; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {p: 'greg', age: 22}</pre>
+                </div>
+                <p><a href="#least_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_len" data-title="len" data-level="3"></a>
+            <h4 class="method_declaration">len( list, deep )</h4>
+            <p>Gets the number of values in a collection.</p>
+            <div class="extended_info">
+                <p>Performs a deep count of nested values in `^list^` when `^deep^` is `true`.</p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.len([1, 2, 3, 4])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 4</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.len({0: 'Zero', 1: 'Zero', 2: 'One', 3: 'Two', 4: 'Two'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 5</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.len([1, [2, [3, [4]]]], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 4</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.len([1, 2, {colors: ['Red', 'Blue'], numbers: [1, 2]}], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 6</pre>
+                </div>
+                <p><a href="#len_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_map" data-title="map" data-level="3"></a>
+            <h4 class="method_declaration">map( list, fn, scope, deep )</h4>
+            <p>Returns a new array of values transformed by the iterator `^fn^`.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed, will perform a deep iteration over values in nested arrays and objects.</p>
+                <p class="method_alias"><span>Aliases: </span><span>collect</span></p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.map(['Red', 'Green', 'Blue'], function (v) { return v + ' is a primary.'; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Red is a primary.', 'Green is a primary.', 'Blue is a primary.']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.map({one: 'Red', two: 'Green', more: {three: 'Blue'}}, function (v) { return v + ' is a primary.'; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Red is a primary.', 'Green is a primary.', 'Blue is a primary.']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.map([1, 2, 3, [4]], function (v){ return v * this.multiplier; }, {multiplier: 3}, true);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [3, 6, 9, 12]</pre>
+                </div>
+                <p><a href="#map_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_max" data-title="max" data-level="3"></a>
+            <h4 class="method_declaration">max( list, fn, deep )</h4>
+            <p>Returns the maximum value in a collection.</p>
+            <div class="extended_info">
+                <p>When a callback `^fn^` is passed each value in `^list^` will be computed through `^fn^` before the maximum value is determined.</p>
+                <p>When `^deep^` is passed, will perform a deep iteration over values in nested arrays and objects.</p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.max([1, 2, 3])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 3</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.max({A: 99, B: 1000, C: 499})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1000</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.max({A: 99, B: [22, 1000], C: 499}, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1000</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.max([1, 2, 3], function(n) { return n * 2; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 6</pre>
+                </div>
+                <p><a href="#max_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_min" data-title="min" data-level="3"></a>
+            <h4 class="method_declaration">min( list, fn, deep )</h4>
+            <p>Returns the minimum value in a collection.</p>
+            <div class="extended_info">
+                <p>When a callback `^fn^` is passed each value in `^list^` will be computed through `^fn^` before the minimum value is determined.</p>
+                <p>When `^deep^` is passed, will perform a deep iteration over values in nested arrays and objects.</p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.min([1, 2, 3])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.min({A: 99, B: 1000, C: 499})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 99</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.min([33, 66, 22, [11]], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 11</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.min([1, 2, 3], function(n) { return n * 2; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 2</pre>
+                </div>
+                <p><a href="#min_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_most" data-title="most" data-level="3"></a>
+            <h4 class="method_declaration">most( list, fn )</h4>
+            <p>Returns the value in a collection with the most occurrences.</p>
+            <div class="extended_info">
+                <p>The callback passed through `^fn^` should map the value to be tested or be a string representing the property name to test.</p>
+                <p class="method_return"><span>Returns: </span><span>...*</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.most([1, 1, 2, 2, 3])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 1</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.most({0: 'Zero', 1: 'Zero', 2: 'One', 3: 'Two'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'Zero'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.most([{color: 'Red'}, {color: 'Red'}, {color: 'Green'}], 'color')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {color: 'Red'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.most([{p: 'al', age: 22}, {p: 'al', age: 47}, {p: 'greg', age: 22}], function (t) { return t.p; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {p: 'al', age: 22}</pre>
+                </div>
+                <p><a href="#most_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_none" data-title="none" data-level="3"></a>
+            <h4 class="method_declaration">none( list, fn, scope, deep )</h4>
+            <p>Returns true if none of the values in a collection passes a condition established within `^fn^`.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed, will perform a deep iteration over values in nested arrays and objects.</p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.none(['Red', 'Green', 'Blue'], function (v)  { return _.isNull(v) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.none([0, 1, null], function (v) { return _.isNull(v) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.none([0, 1, [null]], function (v) { return _.isNull(v) ? true : false; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+
+                </div>
+                <p><a href="#none_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_omit" data-title="omit" data-level="3"></a>
+            <h4 class="method_declaration">omit( list, keys )</h4>
+            <p>Returns all values in `^list^` with properties/indices that are not matched in `^keys^`.</p>
+            <div class="extended_info">
+                <p class="method_alias"><span>Aliases: </span><span>blacklist</span></p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.omit(['Red', 'Green', 'Blue'], 0)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Green', 'Blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.omit(['Red', 'Green', 'Blue'], [0, 1])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.omit({red: '#F00', green: '#0F0', blue: '#00F'}, 'green')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['#F00', '#00F']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.omit({red: '#F00', green: '#0F0', blue: '#00F'}, ['red', 'green'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['#00F']</pre>
+                </div>
+                <p><a href="#omit_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_only" data-title="only" data-level="3"></a>
+            <h4 class="method_declaration">only( list, indices )</h4>
+            <p>Returns only the values whose properties/indices are matched in the `^indices^` array.</p>
+            <div class="extended_info">
+                <p class="method_alias"><span>Aliases: </span><span>whitelist</span></p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.only(['red', 'green', 'blue'], [0, 1])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['red', 'green']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.only({red: '#F00', green: '#0F0', blue: '#00F'}, ['green'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['#0F0']</pre>
+                </div>
+                <p><a href="#only_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_paths" data-title="paths" data-level="3"></a>
+            <h4 class="method_declaration">paths( list, keys, enum )</h4>
+            <p>Returns an object-literal containing unique "namespace paths" as properties that reference corresponding values in the target `^list^`.</p>
+            <div class="extended_info">
+                <p>Alternatively passing `^keys^` with a value of `true` will return an object-literal with "namespace path" property names that reference their paths as values.</p>
+                <p>When `^enum^` receives a value of `true` the paths of any non-enumerable properties in `^list^` will be returned as well.</p>
+                <p>The `paths` method returns array paths in the same manner where a dot delimited string of `0.2.1` could be thought to represent a value in a nested array such as `arr[0][2][1]`.</p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.paths({color: {rgb: '#0F0'}})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {color: {rgb: '#0F0'}, 'color.rgb': '#0F0'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.paths({color: {red: {val: '#F00'}}})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {color: 'color', red: 'color.red', val: 'color.red.val'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.paths(['red'], false, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'red', length: 1}</pre>
+                </div>
+                <p><a href="#paths_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_reduce" data-title="reduce" data-level="3"></a>
+            <h4 class="method_declaration">reduce( list, fn, scope )</h4>
+            <p>Returns the reduced value from `^list^`'s values.</p>
+            <div class="extended_info">
+                <p>The iterator `^fn^` determines the initial value of the reduction.</p>
+                <p class="method_alias"><span>Aliases: </span><span>foldl</span></p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.reduce([22, 44, 88], function (base, value, index) { return base - value; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => -110</pre>
+                </div>
+                <p><a href="#reduce_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_reduceRight" data-title="reduceRight" data-level="3"></a>
+            <h4 class="method_declaration">reduceRight( list, fn, scope )</h4>
+            <p>Returns the right associative reduced value from `^list^`'s values.</p>
+            <div class="extended_info">
+                <p>The iterator `^fn^` determines the initial value of the reduction.</p>
+                <p class="method_alias"><span>Aliases: </span><span>foldr</span></p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.reduceRight([88, 44, 22], function (base, value, index) { return base - value; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 22</pre>
+                </div>
+                <p><a href="#reduceRight_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_reject" data-title="reject" data-level="3"></a>
+            <h4 class="method_declaration">reject( list, fn, scope )</h4>
+            <p>Searches through all values in the collection `^list^` returning all but the values that pass a test in
+                `^fn^`.</p>
+            <div class="extended_info">
+                <p>This method is the opposite of `filter`. The test is established by a condition within `^fn^`.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.reject([1, 2, 3, 'String'], function (v) { return _.isNumber(v) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['String']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.reject({0: 1, 1: 2, 2: 'String'}, function (v) { return _.isNumber(v) ? true : false; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['String']</pre>
+                </div>
+                <p><a href="#reject_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_replace" data-title="replace" data-level="3"></a>
+            <h4 class="method_declaration">replace( list, fn, scope, deep )</h4>
+            <p>Returns a collection that has had the iterator `^fn^` passed over each value.</p>
+            <div class="extended_info">
+                <p>The returned result from `^fn^` is placed at the corresponding name/index in `^list^`.</p>
+                <p>When `^deep^` is passed as `true` any nested arrays' and object-literals' values are iterated over.</p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.replace({red: '#F00', blue: '#00F'}, function (v) { return v + '000'; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {red: '#F00000', blue: '#00F000'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.replace([1, 2], function(v) { return v * this.x; }, {x: 2})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [2, 4]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.replace([1, [2]], function(v) { return v * 2; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [2, [4]]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.replace({0: 1, 1: [2]}, function(v) { return v * 2; }, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 2, 1: [4]}</pre>
+                </div>
+                <p><a href="#replace_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_sample" data-title="sample" data-level="3"></a>
+            <h4 class="method_declaration">sample( list, n, deep )</h4>
+            <p>Gets a random sample of values from a collection.</p>
+            <div class="extended_info">
+                <p>When `^n^` is passed returns `^n^` number of random samples.</p>
+                <p>When `^deep^` is passed as `true` values within nested arrays and objects are  flattened.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sample([2, 3, 5, 4, 1])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [2]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sample([1, 2, 4, 3, 5], 3)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [2, 1, 1]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sample([1, 2, 4, [3, 5]], 3, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [5, 1, 3]</pre>
+                </div>
+                <p><a href="#sample_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_set" data-title="set" data-level="3"></a>
+            <h4 class="method_declaration">set( list, path, value )</h4>
+            <p>Adds a value to a collection at `^path^` even if target index at `^path^` already exists.</p>
+            <div class="extended_info">
+                <p>Values can be added at dot delimited "namespace paths" such as `0.2.1` or `piano.company.22`.</p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.set([1, 2, 'String', 4, 5, 6], 2, 3)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4, 5, 6]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.set({red: '#F00', green: '#0F0', yellow: '#000'}, 'yellow', '#0FF')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {red: '#F00', green: '#0F0', yellow: '#0FF'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.set({red: '#F00', green: '#0F0', others: {}}, 'others.yellow', '#0FF')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {red: '#F00', green: '#0F0', others: {yellow: '#0FF'}}</pre>
+                </div>
+                <p><a href="#set_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_setUndef" data-title="setUndef" data-level="3"></a>
+            <h4 class="method_declaration">setUndef( list, value, deep )</h4>
+            <p>Sets all undefined values in a collection to `^value^`.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed as `true` any nested arrays or object-literals in `^list^` are iterated through as well.</p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.setUndef([1, undefined, 3], 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.setUndef({blue: '#00F', yellow: '#0FF', cyan: undefined}, '#0FF')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {blue: '#00F', yellow: '#0FF', cyan: '#0FF'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.setUndef([1, undefined, [9, undefined]], 2, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3]</pre>
+                </div>
+                <p><a href="#setUndef_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_shuffle" data-title="shuffle" data-level="3"></a>
+            <h4 class="method_declaration">shuffle( list )</h4>
+            <p>Gets a randomized copy of values in a collection.</p>
+            <div class="extended_info">
+                <p>Implements Fischer-Yates shuffle algorithm.</p>
+                <p class="method_return"><span>Returns: </span><span>Array, Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.shuffle([5, 4, 2, 3, 1])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [5, 4, 2, 3, 1]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.shuffle({0: 'Red', 1: 'Green', 2: 'Blue', 3: 'Yellow'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Green', 'Red', 'Yellow', 'Blue']</pre>
+                </div>
+                <p><a href="#shuffle_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_size" data-title="size" data-level="3"></a>
+            <h4 class="method_declaration">size( list, deep )</h4>
+            <p>Gets the number of values in a collection that are not "falsy" (`null`, `undefined`, `0`, `''`, `false` or `NaN`).</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed as `true` non-falsy values in nested arrays and objects are counted.</p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.size([1, null, 2, 3, ''])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 3</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.size([1, [false, [2, [undefined, [3]]]]], true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 3</pre>
+                </div>
+                <p><a href="#size_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_sortBy" data-title="sortBy" data-level="3"></a>
+            <h4 class="method_declaration">sortBy( list, fn, scope )</h4>
+            <p>Returns an array of elements that have been sorted in ascending order by the computed results of running the values in `^list^` through the callback `^fn^`.</p>
+            <div class="extended_info">
+                <p>When a property name is passed through `^fn^` a callback is created that returns the value at the given property in each element. Deeply nested properties can be targeted via dot notation.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sortBy([1, 2, 3, 4, 5, 6], function (num){ return Math.cos(num); })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [3, 4, 2, 5, 1, 6]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sortBy([1, 2, 3, 4, 5, 6], function (num){ return Math.cos(num * 2); }, {x: 2})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [5, 2, 1, 4, 6, 3]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sortBy(['Jupiter', 'Earth', 'Venus', 'Mars'], function(p) { return p.length; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Mars', 'Earth', 'Venus', 'Jupiter']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sortBy(['Jupiter', 'Earth', 'Venus', 'Mars'], 'length')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Mars', 'Earth', 'Venus', 'Jupiter']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sortBy([{foo: {bar: 2}}, {foo: {bar: 1}}, {foo: {bar: 3}}], 'foo.bar')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [{foo: {bar: 1}}, {foo: {bar: 2}}, {foo: {bar: 3}}]</pre>
+                </div>
+                <p><a href="#sortBy_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_sum" data-title="sum" data-level="3"></a>
+            <h4 class="method_declaration">sum( list, deep )</h4>
+            <p>Returns the sum total of all the numeric values in the collection `^list^`.</p>
+            <div class="extended_info">
+                <p>When the callback is passed, `^fn^` is invoked on each numeric value before the value is used in computing the sum total.</p>
+                <p>When `^deep^` is passed as `true`, numeric values in nested arrays and objects are additionally used to compute the sum total.</p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sum([1, 2, 3, 4])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 10</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sum({0: 99, 1: 999, 2: 9999})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 11097</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sum({0: 99, 1: 999, 2: 9999, 3: [22, 222, 2222]}, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 13563</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.sum([1, 2, 3, 4], function (num) { return num * 2; })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 20</pre>
+                </div>
+                <p><a href="#sum_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_tap" data-title="tap" data-level="3"></a>
+            <h4 class="method_declaration">tap( list, fn, scope )</h4>
+            <p>Method is useful for interjecting arbitrary code upon intermediary results within a chained sequence.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>...*</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.tap({0: 'Red'}, function (obj){ return _.toArray(obj); })</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Red']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.chain([1, 2, 3]).tap(function(arr) { return _.toObject('arr1', arr); }).len(true).end();</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 3</pre>
+                </div>
+                <p><a href="#tap_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_values" data-title="values" data-level="3"></a>
+            <h4 class="method_declaration">values( list, deep )</h4>
+            <p>Returns an array containing the values in a collection.</p>
+            <div class="extended_info">
+                <p>When `^deep^` is passed as `true` the values of all nested objects and arrays are returned as well.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.values(['Red', 'Green', 'Blue'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Red', 'Green', 'Blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.values({name: 'Ted', age: 33})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Ted', 33]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.values({0: 1, 1: {0: 1, 1: 2}}, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [0, {0: 1, 1: 2}, 1, 2]</pre>
+                </div>
+                <p><a href="#values_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_where" data-title="where" data-level="3"></a>
+            <h4 class="method_declaration">where( list, matches )</h4>
+            <p>Returns an array containing the name/value pairs in `^list^` that contain matching the name/value pairs in `^matches^`.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.where([{id: 0, age: 22}, {id: 1, age: 29}, {id: 2, age: 29}], {age: 29})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [{id: 1, age: 29}, {id: 2, age: 29}]</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.where([{id: 0, age: 22}, {id: 1, age: 29}, {id: 2, age: 29}], {id: 1, age: 29})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [{id: 1, age: 29}]</pre>
+                </div>
+                <p><a href="#where_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_whereFirst" data-title="whereFirst" data-level="3"></a>
+            <h4 class="method_declaration">whereFirst( list, matches )</h4>
+            <p>Returns the first matched object containing the name/value pairs in `^matches^`.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.whereFirst([{id: 0, age: 29}, {id: 1, age: 29}, {id: 2, age: 29}], {age: 29})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {id: 0, age: 29}</pre>
+                </div>
+                <p><a href="#whereFirst_source" class="source">Source</a></p>
+            </div>
+        </article>
+        </div>
+        <a id="api_functions" class="reference" data-title="Functions" data-level="2"></a>
+        <div id="functions">
+        <h3>Functions</h3>
+        <article> <a class="reference" id="api_after" data-title="after" data-level="3"></a>
+            <h4 class="method_declaration">after( fn, n, start )</h4>
+            <p>Returns a function that will execute on every `^n^`th call.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var fn = function(val) { alert(val); };
+fn = _.after(fn, 3);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => fn(99); fn(99); fn(99); => 99</pre>
+                </div>
+                <p><a href="#after_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_bind" data-title="bind" data-level="3"></a>
+            <h4 class="method_declaration">bind( fn, scope, args )</h4>
+            <p>Returns a function that is bound to the context of `^scope^` when called.</p>
+            <div class="extended_info">
+                <p>Currying of an unlimited number of arguments is achieved by passing `^args^` as an array of arguments to be passed to `^fn^`. When `^fn^` is passed additional arguments when the function is called they are added to the end of the curried arguments passed through `^args^`.</p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var ecosystem = function() { alert(this.type + '!'); };
+var rainforest = {type: 'Tropical'};
+ecosystem = _.bind(ecosystem, rainforest);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ecosystem() => 'Tropical!'</pre>
+                </div>
+                <p><a href="#bind_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_bindAll" data-title="bindAll" data-level="3"></a>
+            <h4 class="method_declaration">bindAll( obj, methods )</h4>
+            <p>Binds one or more methods to the objects specified in `^methods^`.</p>
+            <div class="extended_info">
+                <p>Bound `^methods^` are executed in the context of the target object `^obj^`. When `^methods^` is not passed all of the target object's function properties are bound.</p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var htmlButton = {
+    title   : 'Boiler.js',
+    onClick : function() { alert('Mouse Click: ' + this.title); },
+    onHover : function() { console.log('Mouse Hovering: ' + this.title); }
+};
+_.bindAll(htmlButton);
+jQuery('#button').bind('click', htmlButton.onClick);
+jQuery('#button').bind('mouseover', htmlButton.onHover);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => When the button is clicked, this.title will have the value 'Boiler.js'</pre>
+                </div>
+                <p><a href="#bindAll_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_compose" data-title="compose" data-level="3"></a>
+            <h4 class="method_declaration">compose( *fns )</h4>
+            <p>Returns a function that is the composition of all passed functions.</p>
+            <div class="extended_info">
+                <p>The returned value from a function is given as the first argument of the next function in *`^fns^`. Mathematically, function composition is the application of one function to the results of another.</p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var scorch = function(meat) { return meat + ' is scorched'; };
+var broil = function(meat){ return meat + ' and broiled!'; };
+var meat = _.compose(broil, scorch);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => meat('Chicken') => 'Chicken is scorched and broiled!'</pre>
+                </div>
+                <p><a href="#compose_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_debounce" data-title="debounce" data-level="3"></a>
+            <h4 class="method_declaration">debounce( fn, n, edge )</h4>
+            <p>Returns a function that will NOT be invoked until it hasn't been called for `^n^` milaseconds.</p>
+            <div class="extended_info">
+                <p>When `^edge^` is passed with `true`, `^fn^` is triggered on the leading vs. the trailing edge of the interval. A debounced function allows us to "temper" the number of times it runs. For instance in the case of a window resize event, instead of an event listener firing on every iteration we can ensure that it fires once every `^n^` milliseconds. This behavior can be extremely beneficial for handlers that might otherwise bog down a users browser.</p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var windowWidth = function() { return window.width; }
+var widthChange = _.debounce(windowWidth, 500);
+jQuery(window).resize(widthChange);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => When window is resizing `windowWidth` is fired every 500 ms.</pre>
+                </div>
+                <p><a href="#debounce_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_defer" data-title="defer" data-level="3"></a>
+            <h4 class="method_declaration">defer( fn )</h4>
+            <p>Returns a function that when called will not run immediately; instead, it runs after the current call
+                stack is cleared.</p>
+            <div class="extended_info">
+                <p>This method is similar to using the `setTimeout` function with no delay and can be useful when performing computationally expensive operations that may block the browser UI thread from rendering.</p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var message = function( msg ){ alert(msg); };
+var deferredMsg = _.defer(message);
+message('One');
+deferredMsg('Two');
+message('Three');</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'Three' alerts before 'Two'</pre>
+                </div>
+                <p><a href="#defer_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_delay" data-title="delay" data-level="3"></a>
+            <h4 class="method_declaration">delay( fn, ms )</h4>
+            <p>Returns a function that executes after `^ms^` number of milliseconds when invoked.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var delayed = _.delay(function(msg) { alert('3 seconds ' + msg); }, 3000);
+delayed('after page load!');</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => '3 seconds afteer page load!' alerts after three seconds.</pre>
+                </div>
+                <p><a href="#delay_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_fill" data-title="fill" data-level="3"></a>
+            <h4 class="method_declaration">fill( fn, args )</h4>
+            <p>Returns a function that has been partially "applied" by currying its arguments.</p>
+            <div class="extended_info">
+                <p>The execution context (the dynamic `this` value) goes unchanged.</p>
+                <p class="method_alias"><span>Aliases: </span><span>partial</span></p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var filledFn = _.fill(setTimeout, undefined, 1000);
+filledFn(function() {
+    // Will be executed 1000 ms later
+});</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => Curries values to be used by setTimeout.</pre>
+                </div>
+                <p><a href="#fill_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_memoize" data-title="memoize" data-level="3"></a>
+            <h4 class="method_declaration">memoize( fn, hash )</h4>
+            <p>Returns a memoized version of `^fn^` by caching the function's returned result.</p>
+            <div class="extended_info">
+                <p>Memoization can drastically speed up sluggish computations that might otherwise bring a given
+                    system to a halt.</p>
+                <p>When passed the optional hashing function `^hash^` it will be used to determine the hash key where the cached result is stored based on the arguments passed to `^fn^`. By default the first argument of `^fn^` is used as the hash key.</p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var fibonacci = _.memoize(function(n) {
+    return n < 2 ? n : fibonacci(n - 1) + fibonacci(n - 2);
+});</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => When called stores previously computed values onto itself</pre>
+                </div>
+                <p><a href="#memoize_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_once" data-title="once" data-level="3"></a>
+            <h4 class="method_declaration">once( fn )</h4>
+            <p>Returns a function that can only be called one time.</p>
+            <div class="extended_info">
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var init = _.once(myApplication);
+init();
+init();</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => The second call to init() does nothing.</pre>
+                </div>
+                <p><a href="#once_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_throttle" data-title="throttle" data-level="3"></a>
+            <h4 class="method_declaration">throttle( fn, ms )</h4>
+            <p>Returns a throttled version of `^fn^` that can only be invoked every `^ms^` number of milliseconds.</p>
+            <div class="extended_info">
+                <p>This method is useful when a function is being called repeatedly and limiting the rate of its invocation is a factor.</p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var throttled = _.throttle(getWindowSize, 200);
+$(window).resize(throttled);</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => On window resize throttle will execute only every 200 ms</pre>
+                </div>
+                <p><a href="#throttle_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_times" data-title="times" data-level="3"></a>
+            <h4 class="method_declaration">times( fn, n )</h4>
+            <p>Returns a function that will sequentially execute `^n^` times.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var rain = function() { return 'drop'; };
+rain = _.times(rain, 3);
+rain();</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'drop' => 'drop' => 'drop'</pre>
+                </div>
+                <p><a href="#times_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_wrap" data-title="wrap" data-level="3"></a>
+            <h4 class="method_declaration">wrap( fn, wrapper )</h4>
+            <p>Returns a function that has been wrapped in the `^wrapper^` function.</p>
+            <div class="extended_info">
+                <p>The function that is wrapped is passed as the first argument to `^wrapper^`. This provides a mechanism for running code before and/or after `^fn^` runs.</p>
+                <p class="method_return"><span>Returns: </span><span>Function</span></p>
+                <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">var season = function(name) { return name + ' which is before '; };
+season = _.wrap(season, function(fn) {
+    return "First winter then " + fn('Spring') + 'Summer!';
+});
+season();</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'First winter then Spring which is before Summer!'</pre>
+                </div>
+                <p><a href="#wrap_source" class="source">Source</a></p>
+            </div>
+        </article>
+        </div>
+        <a id="api_numbers_ref" class="reference" data-title="Numbers" data-level="2"></a>
+        <div id="numbers">
+            <h3>Numbers</h3>
+            <article> <a class="reference" id="api_range" data-title="range" data-level="3"></a>
+                <h4 class="method_declaration">range( start, stop, step )</h4>
+                <p>Returns an array containing numbers in a range.</p>
+                <div class="extended_info">
+                    <p> </p>
+                    <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                    <div class="code">
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.range(0, 100, 10)</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]</pre>
+                    </div>
+                    <p><a href="#range_source" class="source">Source</a></p>
+                </div>
+            </article>
+            <article> <a class="reference" id="api_uniqueId" data-title="uniqueId" data-level="3"></a>
+                <h4 class="method_declaration">uniqueId( prefix )</h4>
+                <p>Returns a globally unique ID.</p>
+                <div class="extended_info">
+                    <p>Unique ID will be prefixed with `^prefix^` when passed.</p>
+                    <p class="method_return"><span>Returns: </span><span>String, Number</span></p>
+                    <div class="code">
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.uniqueId()</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => '1421'</pre>
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.uniqueId('pre-')</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => 'pre-00884'</pre>
+                    </div>
+                    <p><a href="#uniqueId_source" class="source">Source</a></p>
+                </div>
+            </article>
+        </div>
+        <a id="api_objects" class="reference" data-title="Objects" data-level="2"></a>
+        <div id="objects">
+        <h3>Objects</h3>
+        <article> <a class="reference" id="api_array" data-title="array" data-level="3"></a>
+            <h4 class="method_declaration">array( *objs )</h4>
+            <p>Creates an array from an object.</p>
+            <div class="extended_info">
+                <p>When multiple object arguments are passed creates an array from the values in `*^objs^`.</p>
+                <p class="method_alias"><span>Aliases: </span><span>toArray</span></p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.array({0: 'Green', 1: 'Blue'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Green', 'Blue']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.array({0: 'Red'}, {0: 'Green'}, {0: 'Blue'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['Red', 'Green', 'Blue']</pre>
+                </div>
+                <p><a href="#array_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_defaults" data-title="defaults" data-level="3"></a>
+            <h4 class="method_declaration">defaults( obj, defaults )</h4>
+            <p>Sets `null` and `undefined` values in `^obj^` with default replacement values.</p>
+            <div class="extended_info">
+                <p>Replacement values are passed in the `^defaults^` object and will not override values that have already been set.</p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.defaults({color: 'Red', rgb: '#F00', hsl: '0, 100, 50'}, {hsl: '0, 100, 50', rgb: '#F00'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {color: 'Red', rgb: '#F00', hsl: '0, 100, 50'}</pre>
+                </div>
+                <p><a href="#defaults_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_extend" data-title="extend" data-level="3"></a>
+            <h4 class="method_declaration">extend( *objs, deep )</h4>
+            <p>Merges two or more objects together into the first.</p>
+            <div class="extended_info">
+                <p>Properties with the same name will be overridden by merged objects.</p>
+                <p>When `^deep^` is passed as `true` nested objects in the target object will additionally be extended.</p>
+                <p class="method_alias"><span>Aliases: </span><span>merge</span></p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.extend({0: 'zero', 1: 'one', 2: 'two'}, {1: 'one'}, {2: 'two'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'zero', 1: 'one', 2: 'two'}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.extend({0: 'zero', 1: 'one', 2: 'two', A: {1: 'one', 2: 'two'}}, {1: 'one'}, true, {2: 'two'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {0: 'zero', 1: 'one', 2: 'two', A: {1: 'one', 2: 'two'}}</pre>
+                </div>
+                <p><a href="#extend_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_get" data-title="get" data-level="3"></a>
+            <h4 class="method_declaration">get( obj, key )</h4>
+            <p>Gets the value located at the `^key^` target property within `^obj^`.</p>
+            <div class="extended_info">
+                <p>Performs a deep search through all nested objects to find `^key^` and returns the first match.</p>
+                <p class="method_return"><span>Returns: </span><span>...*</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.get({0: {a: 8, b: {b_1: 'Green'}}}, 'b_1')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'Green'</pre>
+                </div>
+                <p><a href="#get_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_howDeep" data-title="howDeep" data-level="3"></a>
+            <h4 class="method_declaration">howDeep( obj, key )</h4>
+            <p>Returns an integer representing the value targeted at `^key^`'s nest level (or depth) within `^obj^`.</p>
+            <div class="extended_info">
+                <p>When duplicate keys exist the depth of the one deepest is returned.</p>
+                <p class="method_return"><span>Returns: </span><span>Number</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.howDeep({0: {1: {2: 'Green'}}}, 2)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 3</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.howDeep({color: {red: {vals: {hex: '#F00'}}}}, 'hex')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 4</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.howDeep([['red'], [{color: 'blue'}]], 'color')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 3</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.howDeep([[[['green']]]], 0)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 4</pre>
+                </div>
+                <p><a href="#howDeep_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isArguments" data-title="isArguments" data-level="3"></a>
+            <h4 class="method_declaration">isArguments( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[argument]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isArguments((function(){ return arguments; }) ())</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isArguments_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isArray" data-title="isArray" data-level="3"></a>
+            <h4 class="method_declaration">isArray( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[array]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isArray([1, 2, 3])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isArray_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isBool" data-title="isBool" data-level="3"></a>
+            <h4 class="method_declaration">isBool( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[bool]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isBool(false)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isBool_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isDate" data-title="isDate" data-level="3"></a>
+            <h4 class="method_declaration">isDate( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[date]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isDate(new Date())</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isDate_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isElement" data-title="isElement" data-level="3"></a>
+            <h4 class="method_declaration">isElement( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[element]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isElement(document.createElement('a'))</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isElement_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isEqual" data-title="isEqual" data-level="3"></a>
+            <h4 class="method_declaration">isEqual( obj1, obj2 )</h4>
+            <p>Performs a deep comparison between two objects, testing for equality between all properties and
+                values.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual(null, null)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual(0, 0)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual(undefined, undefined)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual(NaN, NaN)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual('', '')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual(function (){}, function (){})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual([1, 2, 3, 4], [1, 2, 3, 4])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual([1, 2, 3, 4, [1,  2]], [1, 2, 3, 4, [1,  2]])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isEqual({0: {a: 3, b: {b_1: 'Green'}}}, {0: {a: 3, b: {b_1: 'Green'}}})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isEqual_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isFalsy" data-title="isFalsy" data-level="3"></a>
+            <h4 class="method_declaration">isFalsy( obj )</h4>
+            <p>Returns `true` if `^obj^`'s value is `false`, `null`, `0`, `""`, `undefined`, `NaN`.</p>
+            <div class="extended_info">
+                <p></p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isFalsy('')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isFalsy(0)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isFalsy(NaN)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isFalsy(false)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isFalsy(null)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isFalsy([])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isFalsy({})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                </div>
+                <p><a href="#isFalsy_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isFunction" data-title="isFunction" data-level="3"></a>
+            <h4 class="method_declaration">isFunction( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[function]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isFunction(function () {})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isFunction_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isInfinite" data-title="isInfinite" data-level="3"></a>
+            <h4 class="method_declaration">isInfinite( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[infinite]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isInfinite(Infinity)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isInfinite(-Infinity)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isInfinite_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isNaN" data-title="isNaN" data-level="3"></a>
+            <h4 class="method_declaration">isNaN( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[nan]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isNaN(NaN)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isNaN_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isNull" data-title="isNull" data-level="3"></a>
+            <h4 class="method_declaration">isNull( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[null]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isNull(null)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isNull_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isNumber" data-title="isNumber" data-level="3"></a>
+            <h4 class="method_declaration">isNumber( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[number]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isNumber(99)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isNumber(-99)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isNumber(99.98798)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isNumber(Infinity)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isNumber(NaN)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isNumber('99')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                </div>
+                <p><a href="#isNumber_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isObject" data-title="isObject" data-level="3"></a>
+            <h4 class="method_declaration">isObject( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[object]`.</p>
+            <div class="extended_info">
+                <p>Will return `true` for all object types in JavaScript.</p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isObject({color: {red: '#F00'}})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isObject(function () {})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isObject(Math)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isObject_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isPlainObject" data-title="isPlainObject" data-level="3"></a>
+            <h4 class="method_declaration">isPlainObject( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[object]`.</p>
+            <div class="extended_info">
+                <p> </p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isPlainObject({color: {red: '#F00'}})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isPlainObject(function () {})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isPlainObject(Math)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                </div>
+                <p><a href="#isPlainObject_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isRegExp" data-title="isRegExp" data-level="3"></a>
+            <h4 class="method_declaration">isRegExp( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[regexp]`.</p>
+            <div class="extended_info">
+                <p></p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isRegExp(/[a-z]/)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isRegExp(/[\']([0-9])[\']/g)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isRegExp(new RegExp('\\w+'))</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                </div>
+                <p><a href="#isRegExp_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isString" data-title="isString" data-level="3"></a>
+            <h4 class="method_declaration">isString( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[string]`.</p>
+            <div class="extended_info">
+                <p></p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isString('Apples are not oranges.')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isString(['Apples', 'Oranges'])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                </div>
+                <p><a href="#isString_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_isUndefined" data-title="isUndefined" data-level="3"></a>
+            <h4 class="method_declaration">isUndefined( obj )</h4>
+            <p>Returns `true` if `^obj^` is of type `[undefined]`.</p>
+            <div class="extended_info">
+                <p></p>
+                <p class="method_return"><span>Returns: </span><span>Boolean</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isUndefined(undefined)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => true</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.isUndefined({})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => false</pre>
+                </div>
+                <p><a href="#isUndefined_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_module" data-title="module" data-level="3"></a>
+            <h4 class="method_declaration">module( ns )</h4>
+            <p>Builds an object from a namespace string such as `'MyModule.DOM.Utility'`.</p>
+            <div class="extended_info">
+                <p class="method_alias"><span>Aliases: </span><span>build</span></p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.module('Earth.places.ocean')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {Earth: {places: {ocean: {}}}}</pre>
+                </div>
+                <p><a href="#module_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_nest" data-title="nest" data-level="3"></a>
+            <h4 class="method_declaration">nest( obj, prefix )</h4>
+            <p>Returns an object whose children have been encapsulated within their own object.</p>
+            <div class="extended_info">
+                <p>When `^prefix^` is passed a prefix string will be prepended to the newly nested objects' property names.</p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.nest({red: {red: '#F00'}, blue: {blue: '#00F'}, green: {green: '#0F0'}})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {red: {red: '#F00'}, blue: {blue: '#00F'}, green: {green: '#0F0'}}</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.nest({red: {'color-red': '#F00'}, blue: {'color-blue': '#00F'}, green: {'color-green': '#0F0'}}, 'color-')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {red: {'color-red': '#F00'}, blue: {'color-blue': '#00F'}, green: {'color-green': '#0F0'}}</pre>
+                </div>
+                <p><a href="#nest_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_pairs" data-title="pairs" data-level="3"></a>
+            <h4 class="method_declaration">pairs( obj )</h4>
+            <p>Gets the name value pairs from `^obj^`.</p>
+            <div class="extended_info">
+                <p>An object's name/value pairs are returned as an array of arrays.</p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.pairs({red: '#F00', green: '#0F0', blue: '#00F'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => [['red', '#F00'], ['green', '#0F0'], ['blue', '#00F']]</pre>
+                </div>
+                <p><a href="#pairs_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_parent" data-title="parent" data-level="3"></a>
+            <h4 class="method_declaration">parent( obj, key )</h4>
+            <p>Gets the parent object of a nested object at the property `^key^`.</p>
+            <div class="extended_info">
+                <p>When no parent object exists the target object is returned.</p>
+                <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.parent({color: {red: {val: {rgb: '#F00'}}}}, 'val')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => {val: {rgb: '#F00'}}</pre>
+                </div>
+                <p><a href="#parent_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_pluck" data-title="pluck" data-level="3"></a>
+            <h4 class="method_declaration">pluck( obj, key )</h4>
+            <p>Returns an array containing extracted property values.</p>
+            <div class="extended_info">
+                <p>This method is a shortcut for a common usage of the `map` method where values that exists at a property are returned.</p>
+                <p>Deep targeting of values is supported by passing a dot delimited "namespace path" through `^key^`.</p>
+                <p class="method_alias"><span>Aliases: </span><span>fetch</span></p>
+                <p class="method_return"><span>Returns: </span><span>Array</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.pluck([{color: 'red', hex: '#F00'}, {color: 'blue', hex: '#00F'}, {color: 'green', hex: '#0F0'}], 'color')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['red', 'blue', 'green']</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">
+var colors = [{color: {vals: {hex: 'FF0'}}}, {color: {vals: {hex: '0F0'}}}, {color: {vals: {hex: '00F'}}}];
+_.pluck(colors, 'color.vals.hex')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => ['FF0', '0F0', '00F']</pre>
+                </div>
+                <p><a href="#pluck_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_resolve" data-title="resolve" data-level="3"></a>
+            <h4 class="method_declaration">resolve( obj, key, paths, own )</h4>
+            <p>Returns the value at a target `^key^` (property name) OR the full path to a partial property name within `^obj^`.</p>
+            <div class="extended_info">
+                <p>When `^paths^` is passed as `true` the full namespace path of a partial path given through `^key^` is returned.</p>
+                <p>When `^own^` is passed as `true` non-enumerable properties become accessible.</p>
+                <p class="method_return"><span>Returns: </span><span>String</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.resolve({colors: {red: {vals: {rgb: '#F00', hsl: '0, 100, 50'}}}}, 'colors.red.vals.rgb')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => '#F00'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.resolve({colors: {red: {vals: {rgb: '#F00', hsl: '0, 100, 50'}}}}, 'rgb', true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'colors.red.vals.rgb'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.resolve({colors: {red: {vals: {rgb: '#F00', hsl: [0, 100, 50]}}}}, 'colors.red.vals.hsl.1')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 100</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.resolve([['red', 'blue'], ['green'], 'orange'], '0.length', false, true)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 2</pre>
+                </div>
+                <p><a href="#resolve_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_toQueryString" data-title="toQueryString" data-level="3"></a>
+            <h4 class="method_declaration">toQueryString( obj, prefix )</h4>
+            <p>Creates a query string converted from an object literal.</p>
+            <div class="extended_info">
+                <p>Will attempt to convert deeply nested objects and arrays. When `^prefix^` is provided the prefix string is prepended to each property name.</p>
+                <p class="method_return"><span>Returns: </span><span>String</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.toQueryString({firstname: 'John', middlename: 'Edgar', lastname: 'Hoover'})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => "firstname%3DJohn%26middlename%3DEdgar%26lastname%3DHoover"</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.toQueryString({colors: ['Red', 'Blue']}, 'pre-')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => "pre-colors%5B%5D%3DRed%26pre-colors%5B%5D%3DBlue"</pre>
+                </div>
+                <p><a href="#toQueryString_source" class="source">Source</a></p>
+            </div>
+        </article>
+        <article> <a class="reference" id="api_type" data-title="type" data-level="3"></a>
+            <h4 class="method_declaration">type( obj )</h4>
+            <p>Returns a string representative of `^obj^`'s type.</p>
+            <div class="extended_info">
+                <p>Method is capable of testing for objects of type: `[Element]`, `[Array]`, `[Object]`, `[Arguments]`, `[Function]`, `[String]`, `[Number]`, `[Infinity]`, `[Boolean]`, `[Date]`, `[RegExp]`, `[NaN]`, `[Null]`, or `[undefined]`.</p>
+                <p class="method_return"><span>Returns: </span><span>String</span></p>
+                <div class="code">
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type((function(){return arguments;})())</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'arguments'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type([])</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'array'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(false)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'bool'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(new Date())</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'date'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(document.createElement('a'))</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'element'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(-Infinity)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'infinity'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(function() {})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'function'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(NaN)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'nan'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(null)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'null'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(99)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'number'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(Math)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'object'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type({})</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'object'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(/(.)/g)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'regexp'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type('blue')</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'string'</pre>
+                    <pre class="call sh_javascript_dom sh_sourceCode">_.type(undefined)</pre>
+                    <pre class="result sh_javascript_dom sh_sourceCode">// => 'undefined'</pre>
+                </div>
+                <p><a href="#type_source" class="source">Source</a></p>
+            </div>
+        </article>
+        </div>
+        <a id="api_strings" class="reference" data-title="Strings" data-level="2"></a>
+        <div id="strings">
+            <h3>Strings</h3>
+            <article> <a class="reference" id="api_fromQueryString" data-title="fromQueryString" data-level="3"></a>
+                <h4 class="method_declaration">fromQueryString( str, deep )</h4>
+                <p>Creates an object from a query string encoded by `toQueryString`.</p>
+                <div class="extended_info">
+                    <p>When `^deep^` is passed with `true`, will attempt to reassemble all arrays encoded by the `toQueryString` method.</p>
+                    <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                    <div class="code">
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.fromQueryString('firstname%3DJohn%26middlename%3DEdgar%26lastname%3DHoover')</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => {firstname: 'John', middlename: 'Edgar', lastname: 'Hoover'}</pre>
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.fromQueryString('pre-colors%5B%5D%3DRed%26pre-colors%5B%5D%3DBlue', true)</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => {'pre-colors': ['Red', 'Blue']}</pre>
+                    </div>
+                    <p><a href="#fromQueryString_source" class="source">Source</a></p>
+                </div>
+            </article>
+            <article> <a class="reference" id="api_htmlEncode" data-title="htmlEncode" data-level="3"></a>
+                <h4 class="method_declaration">htmlEncode( str )</h4>
+                <p>Encodes common HTML characters into their entity representations.</p>
+                <div class="extended_info">
+                    <p>Characters encoded include `"`, `&amp;`, `'`, `/`, `&lt;`, and `&gt;`.</p>
+                    <p class="method_return"><span>Returns: </span><span>String</span></p>
+                    <div class="code">
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.htmlEncode('&lt;html&gt;&lt;/html&gt;')</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => '&amp;lt;html&amp;gt;&amp;lt;&amp;#x2F;html&amp;gt;'</pre>
+                    </div>
+                    <p><a href="#htmlEncode_source" class="source">Source</a></p>
+                </div>
+            </article>
+            <article> <a class="reference" id="api_htmlDecode" data-title="htmlDecode" data-level="3"></a>
+                <h4 class="method_declaration">htmlDecode( str )</h4>
+                <p>Decodes common HTML entity representations into their HTML characters.</p>
+                <div class="extended_info">
+                    <p>Entities decoded include `quot`, `amp`, `apos`, `#x2F`, `lt`, and `gt`.</p>
+                    <p class="method_return"><span>Returns: </span><span>String</span></p>
+                    <div class="code">
+                        <pre class="call sh_javascript_dom sh_sourceCode">'&amp;lt;html&amp;gt;&amp;lt;/html&amp;gt;'</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => &lt;html&gt;&lt;/html&gt;</pre>
+                    </div>
+                    <p><a href="#htmlDecode_source" class="source">Source</a></p>
+                </div>
+            </article>
+        </div>
+        <a id="api_utility" class="reference" data-title="Utility" data-level="2"></a>
+        <div id="utility">
+            <h3>Utility</h3>
+            <article> <a class="reference" id="api_chain" data-title="chain" data-level="3"></a>
+                <h4 class="method_declaration">chain( obj )</h4>
+                <p>Starts a chained method sequence by returning a modified version of the library object.</p>
+                <div class="extended_info">
+                    <p>The `chain` method can be thought of as a wrapper to the Boiler.js library method: `_()`. Arguments passed through `chain` will be passed to the first method called in a chained sequence. All sequences are terminated by calling the `end`.</p>
+                    <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                    <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">_.chain([1, 2, null, [3, "", 4]]).compact().end()</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4]</pre>
+                    </div>
+                    <p><a href="#chain_source" class="source">Source</a></p>
+                </div>
+            </article>
+            <article> <a class="reference" id="api_end" data-title="end" data-level="3"></a>
+                <h4 class="method_declaration">end( )</h4>
+                <p>Returns the computed value from a sequence of chained method calls.</p>
+                <div class="extended_info">
+                    <p>The `end` method is always called at the end of a method chain to return the computed value.</p>
+                    <p class="method_alias"><span>Aliases: </span><span>result</span></p>
+                    <p class="method_return"><span>Returns: </span><span>...*</span></p>
+                    <div class="code">
+              <pre class="call sh_javascript_dom sh_sourceCode">_.chain([1, 2, null, [3, "", 4]]).compact().end();</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3, 4]</pre>
+                    </div>
+                    <p><a href="#end_source" class="source">Source</a></p>
+                </div>
+            </article>
+            <article> <a class="reference" id="api_identity" data-title="identity" data-level="3"></a>
+                <h4 class="method_declaration">identity( value )</h4>
+                <p>Returns the value passed through `^value^`.</p>
+                <div class="extended_info">
+                    <p>Mathematically this is represented as `f(v) = v`. This method differs from the `value` method in that arguments that are functions will not be invoked.</p>
+                    <p class="method_return"><span>Returns: </span><span>...*</span></p>
+                    <div class="code">
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.identity(555.3)</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => 555.3</pre>
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.identity(function (){ return true; })</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => function (){ return true; }</pre>
+                    </div>
+                    <p><a href="#identity_source" class="source">Source</a></p>
+                </div>
+            </article>
+            <article> <a class="reference" id="api_noConflict" data-title="noConflict" data-level="3"></a>
+                <h4 class="method_declaration">noConflict( )</h4>
+                <p>Relinquishes control of the library global to its previous owner and returns a reference to the Boiler.js
+                    object.</p>
+                <div class="extended_info">
+                    <p></p>
+                    <p class="method_return"><span>Returns: </span><span>Object</span></p>
+                    <div class="code">
+                        <pre class="call sh_javascript_dom sh_sourceCode">var boiler = _.noConflict();</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => Previous libraries regain access to their conflicted reference</pre>
+                    </div>
+                    <p><a href="#noConflict_source" class="source">Source</a></p>
+                </div>
+            </article>
+            <article> <a class="reference" id="api_value" data-title="value" data-level="3"></a>
+                <h4 class="method_declaration">value( value )</h4>
+                <p>Returns the value passed through `^value^`.</p>
+                <div class="extended_info">
+                    <p>When `^value^` is a function will invoke it and return its return value.</p>
+                    <p class="method_return"><span>Returns: </span><span>...*</span></p>
+                    <div class="code">
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.value(99)</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => 99</pre>
+                        <pre class="call sh_javascript_dom sh_sourceCode">_.value(function () { return [1, 2, 3]; })</pre>
+                        <pre class="result sh_javascript_dom sh_sourceCode">// => [1, 2, 3]</pre>
+                    </div>
+                    <p><a href="#value_source" class="source">Source</a></p>
+                </div>
+            </article>
+        </div>
+        </section>
+
+    </div>
+    <div id="elipsis">[ click to expand ]</div>
+    <div id="top"><a href="#boiler_back-to-top">Top</a></div>
+    <div id="footer">
+        <div class="copyright">© 2013 <a href='https://twitter.com/wilneeley'>Wil Neeley</a> and Contributors</div>
+        <div class="version">Version 0.9.0 Beta</div>
+    </div>
+</div>
+</body>
+</html>

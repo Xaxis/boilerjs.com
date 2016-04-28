@@ -1,0 +1,26 @@
+{
+  "name": "boiler",
+  "version": "0.9.0",
+  "description": "Boiler is a utility library that makes every day tasks in JavaScript easier by providing over 115 methods that work on `arrays`, `collections`, `functions`, `numbers`, `objects`, and `strings`. It's the JavaScript equivalent of a Swiss Army Knife.",
+  "homepage": "http://boilerjs.com",
+  "license": "MIT",
+  "main": "/boiler.js",
+  "keywords": [
+      "javascript",
+      "util",
+      "utility",
+      "library",
+      "recursion"
+  ],
+  "author": {
+    "name": "Wil Neeley",
+    "email": "william.neeley@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/Xaxis/boiler/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Xaxis/boiler.git"
+  }
+}
